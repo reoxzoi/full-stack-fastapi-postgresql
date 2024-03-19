@@ -1,9 +1,9 @@
-import React from 'react'
-import { Button, Flex, Icon, useDisclosure } from '@chakra-ui/react'
-import { FaPlus } from 'react-icons/fa'
+import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react"
+import type React from "react"
+import { FaPlus } from "react-icons/fa"
 
-import AddUser from '../Admin/AddUser'
-import AddItem from '../Items/AddItem'
+import AddUser from "../Admin/AddUser"
+import AddItem from "../Items/AddItem"
 
 interface NavbarProps {
   type: string
@@ -24,12 +24,10 @@ const Navbar: React.FC<NavbarProps> = ({ type }) => {
                     <Input type='text' placeholder='Search' fontSize={{ base: 'sm', md: 'inherit' }} borderRadius='8px' />
                 </InputGroup> */}
         <Button
-          bg="ui.main"
-          color="white"
-          _hover={{ opacity: 0.8 }}
+          variant="primary"
           gap={1}
-          fontSize={{ base: 'sm', md: 'inherit' }}
-          onClick={type === 'User' ? addUserModal.onOpen : addItemModal.onOpen}
+          fontSize={{ base: "sm", md: "inherit" }}
+          onClick={type === "User" ? addUserModal.onOpen : addItemModal.onOpen}
         >
           <Icon as={FaPlus} /> Add {type}
         </Button>

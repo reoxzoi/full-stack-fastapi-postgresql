@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import emails
+import emails  # type: ignore
 from jinja2 import Template
 from jose import JWTError, jwt
 
@@ -17,8 +17,10 @@ class EmailData:
     subject: str
 
 
-def render_email_template(*, template_name: str, context: dict[str, Any]):
-    template_str = (Path(settings.EMAIL_TEMPLATES_DIR) / template_name).read_text()
+def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
+    template_str = (
+        Path(__file__).parent / "email-templates" / "build" / template_name
+    ).read_text()
     html_content = Template(template_str).render(context)
     return html_content
 
@@ -29,7 +31,7 @@ def send_email(
     subject: str = "",
     html_content: str = "",
 ) -> None:
-    assert settings.EMAILS_ENABLED, "no provided configuration for email variables"
+    assert settings.emails_enabled, "no provided configuration for email variables"
     message = emails.Message(
         subject=subject,
         html=html_content,
@@ -38,6 +40,8 @@ def send_email(
     smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
     if settings.SMTP_TLS:
         smtp_options["tls"] = True
+    elif settings.SMTP_SSL:
+        smtp_options["ssl"] = True
     if settings.SMTP_USER:
         smtp_options["user"] = settings.SMTP_USER
     if settings.SMTP_PASSWORD:
@@ -59,8 +63,7 @@ def generate_test_email(email_to: str) -> EmailData:
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Password recovery for user {email}"
-    server_host = settings.SERVER_HOST
-    link = f"{server_host}/reset-password?token={token}"
+    link = f"{settings.server_host}/reset-password?token={token}"
     html_content = render_email_template(
         template_name="reset_password.html",
         context={
@@ -79,7 +82,6 @@ def generate_new_account_email(
 ) -> EmailData:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - New account for user {username}"
-    link = settings.SERVER_HOST
     html_content = render_email_template(
         template_name="new_account.html",
         context={
@@ -87,7 +89,7 @@ def generate_new_account_email(
             "username": username,
             "password": password,
             "email": email_to,
-            "link": link,
+            "link": settings.server_host,
         },
     )
     return EmailData(html_content=html_content, subject=subject)
@@ -109,6 +111,6 @@ def generate_password_reset_token(email: str) -> str:
 def verify_password_reset_token(token: str) -> str | None:
     try:
         decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        return decoded_token["sub"]
+        return str(decoded_token["sub"])
     except JWTError:
         return None
